@@ -1,0 +1,43 @@
+import streamlit as st
+import numpy as np
+import joblib
+
+# Load model dan scaler
+model = joblib.load("/content/UCI_Credit_Card.csv")
+scaler = joblib.load("/content/UCI_Credit_Card.csv")
+
+st.title("Prediksi Default Nasabah Kartu Kredit")
+st.write("Masukkan informasi nasabah untuk memprediksi kemungkinan gagal bayar.")
+
+# Input fitur
+LIMIT_BAL = st.number_input("Limit Kredit (LIMIT_BAL)", min_value=0)
+SEX = st.selectbox("Jenis Kelamin", options=[1, 2], format_func=lambda x: "Pria" if x == 1 else "Wanita")
+EDUCATION = st.selectbox("Pendidikan", options=[1, 2, 3, 4], format_func=lambda x: ["S2/S3", "S1", "SMA", "Lainnya"][x-1])
+MARRIAGE = st.selectbox("Status Pernikahan", options=[1, 2, 3], format_func=lambda x: ["Menikah", "Lajang", "Lainnya"][x-1])
+AGE = st.slider("Usia", 18, 100, 30)
+
+PAY_0 = st.number_input("Riwayat Pembayaran Bulan ke-0 (PAY_0)", min_value=-2, max_value=8)
+PAY_2 = st.number_input("Riwayat Pembayaran Bulan ke-2 (PAY_2)", min_value=-2, max_value=8)
+PAY_3 = st.number_input("Riwayat Pembayaran Bulan ke-3 (PAY_3)", min_value=-2, max_value=8)
+PAY_4 = st.number_input("Riwayat Pembayaran Bulan ke-4 (PAY_4)", min_value=-2, max_value=8)
+PAY_5 = st.number_input("Riwayat Pembayaran Bulan ke-5 (PAY_5)", min_value=-2, max_value=8)
+PAY_6 = st.number_input("Riwayat Pembayaran Bulan ke-6 (PAY_6)", min_value=-2, max_value=8)
+
+BILL_AMTs = [st.number_input(f"Tagihan Bulan ke-{i} (BILL_AMT{i})", min_value=0) for i in range(1, 7)]
+PAY_AMTs = [st.number_input(f"Pembayaran Bulan ke-{i} (PAY_AMT{i})", min_value=0) for i in range(1, 7)]
+
+# Kumpulkan semua input
+input_data = [
+    LIMIT_BAL, SEX, EDUCATION, MARRIAGE, AGE,
+    PAY_0, PAY_2, PAY_3, PAY_4, PAY_5, PAY_6,
+    *BILL_AMTs, *PAY_AMTs
+]
+
+# Proses prediksi
+if st.button("Prediksi"):
+    input_scaled = scaler.transform([input_data])
+    prediction = model.predict(input_scaled)[0]
+    if prediction == 1:
+        st.error("❌ Nasabah diprediksi akan GAGAL membayar tagihan bulan depan.")
+    else:
+        st.success("✅ Nasabah diprediksi TIDAK akan gagal membayar tagihan.")
